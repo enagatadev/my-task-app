@@ -1,0 +1,23 @@
+# Claude Code
+.claude/
+
+# データファイル
+tasks.json
+
+# Pythonキャッシュ
+__pycache__/
+*.py[cod]
+*.pyo
+
+# 仮想環境
+venv/
+.venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db

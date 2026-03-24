@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>タスク管理アプリ</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: "Segoe UI", sans-serif;
+      background: #f0f2f5;
+      display: flex;
+      justify-content: center;
+      padding: 40px 16px;
+    }
+
+    .container {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+      padding: 32px;
+      width: 100%;
+      max-width: 600px;
+    }
+
+    h1 {
+      font-size: 1.5rem;
+      color: #333;
+      margin-bottom: 24px;
+      text-align: center;
+    }
+
+    /* --- 追加フォーム --- */
+    .add-form {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 28px;
+    }
+
+    .add-form .full-width {
+      grid-column: 1 / -1;
+    }
+
+    .add-form input[type="text"],
+    .add-form input[type="date"],
+    .add-form select {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      outline: none;
+      transition: border-color 0.2s;
+      background: #fff;
+    }
+
+    .add-form input:focus,
+    .add-form select:focus {
+      border-color: #4a90e2;
+    }
+
+    .add-form button {
+      grid-column: 1 / -1;
+      padding: 10px;
+      background: #4a90e2;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .add-form button:hover {
+      background: #357abd;
+    }
+
+    /* --- タスク一覧 --- */
+    .task-list {
+      list-style: none;
+    }
+
+    .task-list li {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px 12px;
+      border-bottom: 1px solid #eee;
+      border-radius: 6px;
+      transition: background 0.15s;
+    }
+
+    .task-list li:last-child {
+      border-bottom: none;
+    }
+
+    .task-list li:hover {
+      background: #fafafa;
+    }
+
+    /* 優先度「高」は左ボーダーと背景で強調 */
+    .task-list li.priority-high {
+      border-left: 4px solid #e53935;
+      background: #fff5f5;
+    }
+
+    .task-list li.priority-high:hover {
+      background: #ffe8e8;
+    }
+
+    .task-list li.priority-mid {
+      border-left: 4px solid #fb8c00;
+    }
+
+    .task-list li.priority-low {
+      border-left: 4px solid #66bb6a;
+    }
+
+    .task-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .task-title {
+      font-size: 0.95rem;
+      color: #222;
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .priority-high .task-title {
+      color: #c62828;
+    }
+
+    .task-meta {
+      margin-top: 4px;
+      font-size: 0.78rem;
+      color: #888;
+      display: flex;
+      gap: 12px;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .badge-high  { background: #ffebee; color: #c62828; }
+    .badge-mid   { background: #fff3e0; color: #e65100; }
+    .badge-low   { background: #e8f5e9; color: #2e7d32; }
+
+    .delete-btn {
+      flex-shrink: 0;
+      background: none;
+      border: 1px solid #e57373;
+      color: #e57373;
+      border-radius: 6px;
+      padding: 5px 12px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s;
+    }
+
+    .delete-btn:hover {
+      background: #e57373;
+      color: #fff;
+    }
+
+    .empty {
+      text-align: center;
+      color: #aaa;
+      font-size: 0.9rem;
+      padding: 20px 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>タスク管理</h1>
+
+    <form class="add-form" action="/add" method="post">
+      <input class="full-width" type="text" name="title" placeholder="タスク名を入力..." required>
+      <input type="date" name="deadline">
+      <select name="priority">
+        <option value="高">高</option>
+        <option value="中" selected>中</option>
+        <option value="低">低</option>
+      </select>
+      <button type="submit">追加</button>
+    </form>
+
+    {% if tasks %}
+    <ul class="task-list">
+      {% for task in tasks %}
+      {% set p_class = "priority-high" if task.priority == "高" else ("priority-mid" if task.priority == "中" else "priority-low") %}
+      {% set b_class = "badge-high"    if task.priority == "高" else ("badge-mid"    if task.priority == "中" else "badge-low") %}
+      <li class="{{ p_class }}">
+        <div class="task-info">
+          <div class="task-title">{{ task.title }}</div>
+          <div class="task-meta">
+            <span class="badge {{ b_class }}">{{ task.priority }}</span>
+            {% if task.deadline %}
+            <span>期限: {{ task.deadline }}</span>
+            {% else %}
+            <span>期限: なし</span>
+            {% endif %}
+          </div>
+        </div>
+        <form action="/delete/{{ task.id }}" method="post">
+          <button class="delete-btn" type="submit">削除</button>
+        </form>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="empty">タスクがありません</p>
+    {% endif %}
+  </div>
+</body>
+</html>
